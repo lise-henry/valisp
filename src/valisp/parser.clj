@@ -12,18 +12,37 @@
     "not="
     "defn"})
 
+
+(def ^:dynamic state {})
+
 (declare parse) 
+
+(defn statement? []
+  "Return true if we are in a statement, ie 'xxx;',
+   false else, ie 'f (xxx)'"
+  (:statement state))
 
 (defn parse-if [args]
   "Parse if form"
+  (println "if:" state)
   (condp = (count args)
-    2 (format "if (%s) {%s;}"
-              (parse (first args))
-              (parse (second args)))
-    3 (format "if (%s) {%s;} else {%s;}"
+    2 (if (statement?) 
+        ((format "if (%s) {%s;}"
+                 (binding [state (assoc state :statement false)]
+                   (parse (first args)))
+                 (parse (second args))))
+        (throw (Exception.
+                "If must take 3 arguments when return value is used")))
+    3 (if (statement?)
+        (format "if (%s) {%s;} else {%s;}"
+                (binding [state (assoc state :statement false)]
+                  (parse (first args)))
+                (parse (second args))
+                (parse (nth args 2)))
+        (format "(%s)?%s:%s"
               (parse (first args))
               (parse (second args))
-              (parse (nth args 2)))
+              (parse (nth args 2))))
     (throw (Exception. 
             (format 
              "Parse error: wrong number of arguments to if (%s)"
@@ -48,14 +67,15 @@
                                (format
                                 "%s is not a valid comparator"
                                 name))))]
-      (format "%s %s %s %s"
-              (parse (first args))
-              comparator
-              (parse (second args))
-              (if (= 2 (count args))
-                ""
-                (str "&& "
-                     (parse-comparator name (rest args))))))))
+      (binding [state (assoc state :statement false)]
+        (format "%s %s %s %s"
+                (parse (first args))
+                comparator
+                (parse (second args))
+                (if (= 2 (count args))
+                  ""
+                  (str "&& "
+                       (parse-comparator name (rest args)))))))))
 
 
 (defn parse-parameters [args]
@@ -99,14 +119,24 @@
                       name
                       (parse-parameters params)
                       (if (= 1 (count exprs))
-                        (format "return %s;"
-                                (parse (first exprs)))
+                        (if (= ftype 'void)
+                          (format "%s;"
+                                  (binding [state (assoc state :statement true)]
+                                    (println "defn: " state)
+                                    (parse (first exprs))))
+                          (format "return %s;"
+                                  (binding [state (assoc state :statement false)]
+                                    (parse (first exprs))))))
+                      (binding [state (assoc state :statement true)]
+                        (println "defn:" state)
                         (str (join " " 
                                    (map #(str (parse %) ";")
                                         (butlast exprs)))
-                             
-                             (format "return %s;"
-                                     (parse (last exprs))))))))))
+                             (if (= ftype 'void)
+                               (format "%s;" (parse (last exprs)))
+                               (binding [state (assoc state :statement false)]
+                                 (format "return %s;"
+                                         (parse (last exprs))))))))))))
                       
 (defn parse-special-call [name args]
   "Special hardwired cases"
@@ -129,7 +159,10 @@
   "Transform lisp call into vala"
   (format "%s (%s)" 
           name 
-          (join ", " (map parse args))))
+          (binding [state (assoc state :statement false)]
+            (println "fcall:" state)
+            (join ", " 
+                  (map parse args)))))
 
 (defn parse-call [name args]
   "Parce a call. Usually function call, if not reserved keyword"
