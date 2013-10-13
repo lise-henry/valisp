@@ -19,8 +19,35 @@
 
 (declare parse) 
 
-(defn add-code [s]
-  "Add a string to code string. Returns empty string as
+(defn parse-basic-type [t]
+  "Return a string corresponding to the C type. Ie, instead
+   of denoting arrays with <type>, it's type[]"
+  (let [s (if (string? t)
+            t
+            (name t))
+        c-< (filter #(= % \<) (seq s))
+        c-> (filter #(= % \>) (seq s))]
+    (assert (= (count c-<) (count c->)) "Parse error in parse-basic-type: < and > don't match")
+    ; TODO: add test to avoid validating <in>t
+    (str
+     (join (remove #(or (= % \<) (= % \>)) s))
+     (join (for [_ (range (count c-<))]
+             "[]")))))
+
+(defn parse-type [t]
+  "Returns the full C type of a valisp type"
+  (cond
+   (symbol? t) (parse-basic-type t)
+   (string? t) (parse-basic-type t)
+   (vector? t) (throw (Exception. 
+                       "Error in parse type: function types not yet supported"))
+   :else (throw (Exception.
+                 (format 
+                  "Parse error in parse type: a valid type must be a symbol or a vector, not %s (%s)"
+                  (type t)
+                  t)))))
+
+(defn add-code [s]  "Add a string to code string. Returns empty string as
    usually when adding to code you don't need to return value"
   ;;TODO: change this!!!!!
   (def code (str code " " s))
@@ -93,7 +120,7 @@
                       (let [[name type] args]
                         (assert (and (symbol? name) (symbol? type))
                                 "Parse error in function parameters: type or name is not a symbol")
-                        (format "%s %s" type name)))
+                        (format "%s %s" (parse-type type) name)))
                     (partition 2 args)))
     (throw (Exception. "Parse error: function parameters must each have a name and a type"))))
 
@@ -133,16 +160,12 @@
          (not (symbol? name)) (throw 
                                (Exception.
                                 "Parse error: defn: function name must be a symbol"))
-        (not (symbol? ftype)) (throw (Exception. 
-                                    (format 
-                                     "Parse error: defn: type must be a symbol (is %s)"
-                                     (type ftype))))
         (not (vector? params)) (throw (Exception. 
                                        (format
                                         "Parse error: defn: function parameters must be a vector, is %s"
                                         (type params))))
         :else (do (add-code (format "%s %s (%s) {\n"
-                                    ftype
+                                    (parse-type ftype)
                                     name
                                     (parse-parameters params)))
                   (add-code (format "%s}"
@@ -153,11 +176,11 @@
   (assert (<= 2 (count args) 3) "Parse error in let: bindings must be 2 or 3 arguments")
   (let [name (first args)
         value (last args)
-        ftype (if (= 3 (count args))
-                (second args)
-                'var)]
+        ftype (parse-type (if (= 3 (count args))
+                            (second args)
+                            'var))]
     (add-code (format "%s %s = %s;\n"
-                      ftype
+                      (parse-type ftype)
                       name
                       (binding [state (assoc state :statement false)]
                         (parse value))))))
