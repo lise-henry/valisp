@@ -22,6 +22,7 @@
 (defn add-code [s]
   "Add a string to code string. Returns empty string as
    usually when adding to code you don't need to return value"
+  ;;TODO: change this!!!!!
   (def code (str code " " s))
   "")
 
@@ -34,14 +35,14 @@
   "Parse if form"
   (condp = (count args)
     2 (if (statement?) 
-        (add-code (format "if (%s) {%s;}"
+        (add-code (format "if (%s){\n%s;\n}\n"
                  (binding [state (assoc state :statement false)]
                    (parse (first args)))
                  (parse (second args))))
         (throw (Exception.
                 "If must take 3 arguments when return value is used")))
     3 (if (statement?)
-        (add-code (format "if (%s) {%s;} else {%s;}"
+        (add-code (format "if (%s) {\n%s;\n}\n else {\n%s;\n}"
                   (binding [state (assoc state :statement false)]
                     (parse (first args)))
                   (parse (second args))
@@ -106,13 +107,13 @@
   "Parse the expression(s) of a function"
   (if (= 1 (count exprs))
     (if (= ftype 'void)
-      (add-code (format "%s;"
+      (add-code (format "%s;\n"
                         (binding [state (assoc state :statement true)]
                           (parse (first exprs)))))
-      (add-code (format "return %s;"
+      (add-code (format "return %s;\n"
                         (binding [state (assoc state :statement false)]
                           (parse (first exprs))))))
-    (do (add-code (format "%s;"
+    (do (add-code (format "%s;\n"
                           (binding [state (assoc state :statement true)]
                             (parse (first exprs)))))
         (parse-defn-expr (rest exprs) ftype))))
@@ -147,7 +148,7 @@
                                     ftype
                                     name
                                     (parse-parameters params)))
-                  (add-code (format "%s\n}"
+                  (add-code (format "%s}"
                                     (parse-defn-expr exprs ftype)))))))))
 
 (defn parse-let-binding [args]
@@ -158,7 +159,7 @@
         ftype (if (= 3 (count args))
                 (second args)
                 'var)]
-    (add-code (format "%s %s = %s;"
+    (add-code (format "%s %s = %s;\n"
                       ftype
                       name
                       (binding [state (assoc state :statement false)]
@@ -169,18 +170,17 @@
   (doall (map parse-let-binding args)))
 
 (defn parse-let-expr [args]
-  (println state)
   (if (= (count args) 1)
     (if (statement?)
-      (add-code (format "%s;"
+      (add-code (format "%s;\n"
                         (parse (first args))))
-      (do (add-code (format "var __tmp_var = %s;"
+      (do (add-code (format "var __tmp_var = %s;\n"
                              (parse (first args))))
           "__tmp_var"))
     (do
       (binding [state (assoc state :statement true)]
         (add-code
-         (format "%s;"
+         (format "%s;\n"
                  (parse (first args)))))
       (parse-let-expr (rest args)))))
                       
@@ -238,7 +238,7 @@
   "Parse an expression."
   (cond
    (list? expr) (parse-list expr)
-   (string? expr) (str "\"" expr "\"")
+   (string? expr) (format "\"%s\"" expr)
    (number? expr) (str expr)
    (symbol? expr) (str expr)
    :else (throw (Exception. (str 
