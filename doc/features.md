@@ -28,7 +28,7 @@ meaning:
 
 ## if ##
 
-Three-params and two-params if are implemented, ie:
+If is implemented and can work with three params or two params:
 
 ```
 (if condition
@@ -41,7 +41,7 @@ Three-params and two-params if are implemented, ie:
     expr-true)
 ```
 
-It is possile to use the return value of `if`, but only with the
+It is possible to use the return value of `if`, but only with the
 thee-params version:
 
 ```
