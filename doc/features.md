@@ -91,7 +91,7 @@ with full declaration.
 
 ## comparators ##
 
-<, >, =, not=, <=, >= all work as you would suppose they do, eg:
+`<`, `>`, `=`, `not=`, `<=`, `>=` all work as you would suppose they do, eg:
 
 ```
 (< 2 3)
