@@ -24,7 +24,6 @@
 
 (defn parse-if [args]
   "Parse if form"
-  (println "if:" state)
   (condp = (count args)
     2 (if (statement?) 
         ((format "if (%s) {%s;}"
@@ -89,6 +88,30 @@
                     (partition 2 args)))
     (throw (Exception. "Parse error: function parameters must each have a name and a type"))))
 
+(defn parse-do [args]
+  "Parse do expression, ie multiple statements"
+  (println "p-do:" args)
+  (println (join ";" (map parse args)))
+  "42")
+
+(defn parse-defn-expr [exprs ftype]
+  "Parse the expression(s) of a function"
+  (println (count exprs))
+  (println (parse (first exprs)))
+  (if (= 1 (count exprs))
+    (if (= ftype 'void)
+      (format "%s;"
+              (binding [state (assoc state :statement true)]
+                (parse (first exprs))))
+      (format "return %s;"
+              (binding [state (assoc state :statement false)]
+                (parse (first exprs)))))
+    (format "%s; %s" 
+            (binding [state (assoc state :statement true)]
+              (parse (first exprs)))
+            (parse-defn-expr (rest exprs) ftype))))
+
+
 (defn parse-defn [args]
   "Declare a function (not a closure)"
   (if (< (count args) 2)
@@ -118,31 +141,15 @@
                       ftype
                       name
                       (parse-parameters params)
-                      (if (= 1 (count exprs))
-                        (if (= ftype 'void)
-                          (format "%s;"
-                                  (binding [state (assoc state :statement true)]
-                                    (println "defn: " state)
-                                    (parse (first exprs))))
-                          (format "return %s;"
-                                  (binding [state (assoc state :statement false)]
-                                    (parse (first exprs))))))
-                      (binding [state (assoc state :statement true)]
-                        (println "defn:" state)
-                        (str (join " " 
-                                   (map #(str (parse %) ";")
-                                        (butlast exprs)))
-                             (if (= ftype 'void)
-                               (format "%s;" (parse (last exprs)))
-                               (binding [state (assoc state :statement false)]
-                                 (format "return %s;"
-                                         (parse (last exprs))))))))))))
+                      (parse-defn-expr exprs ftype))))))
                       
+
+
 (defn parse-special-call [name args]
   "Special hardwired cases"
   (condp = (str name)
     "if" (parse-if args)
-    "do" (join ";" (map parse args))
+    "do" (parse-do args)
     "<" (parse-comparator name args)
     "<=" (parse-comparator name args)
     ">" (parse-comparator name args)
@@ -160,7 +167,6 @@
   (format "%s (%s)" 
           name 
           (binding [state (assoc state :statement false)]
-            (println "fcall:" state)
             (join ", " 
                   (map parse args)))))
 
