@@ -11,7 +11,8 @@
     "="
     "not="
     "defn"
-    "let"})
+    "let"
+    "set!"})
 
 (def ^:dynamic state {})
 
@@ -230,6 +231,23 @@
     (parse-let-expr (rest args))))
   
 
+(defn parse-set! [args]
+  "Allows to assign value to variables"
+  (assert (= (count args) 2)
+          "Parse error: set! must take exactly two arguments")
+  (println args)
+  (println (first args))
+  (println (type (first  args)))
+  (let [name (parse (first args))
+        value (binding [state (assoc state :statement false)]
+                (parse (second args)))]
+    (format "%s = %s%s\n"
+                       name
+                       value
+                       (if (statement?)
+                         ";"
+                         ""))))
+
 (defn parse-special-call [name args]
   "Special hardwired cases"
   (condp = (str name)
@@ -243,6 +261,7 @@
     "not=" (parse-comparator name args)
     "defn" (parse-defn args)
     "let" (parse-let args)
+    "set!" (parse-set! args)
     (throw (Exception. (str 
                         "Parse error: unrecognized keyword: "
                         name)))))
