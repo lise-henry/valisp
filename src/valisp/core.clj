@@ -18,6 +18,6 @@
     (-> args
         first
         read-from-file
-        parser/parse
+        parser/run-parse
         println)))
   

@@ -10,12 +10,20 @@
     ">="
     "="
     "not="
-    "defn"})
-
+    "defn"
+    "let"})
 
 (def ^:dynamic state {})
 
+(def ^:dynamic code "")
+
 (declare parse) 
+
+(defn add-code [s]
+  "Add a string to code string. Returns empty string as
+   usually when adding to code you don't need to return value"
+  (def code (str code " " s))
+  "")
 
 (defn statement? []
   "Return true if we are in a statement, ie 'xxx;',
@@ -26,18 +34,18 @@
   "Parse if form"
   (condp = (count args)
     2 (if (statement?) 
-        ((format "if (%s) {%s;}"
+        (add-code (format "if (%s) {%s;}"
                  (binding [state (assoc state :statement false)]
                    (parse (first args)))
                  (parse (second args))))
         (throw (Exception.
                 "If must take 3 arguments when return value is used")))
     3 (if (statement?)
-        (format "if (%s) {%s;} else {%s;}"
-                (binding [state (assoc state :statement false)]
-                  (parse (first args)))
-                (parse (second args))
-                (parse (nth args 2)))
+        (add-code (format "if (%s) {%s;} else {%s;}"
+                  (binding [state (assoc state :statement false)]
+                    (parse (first args)))
+                  (parse (second args))
+                  (parse (nth args 2))))
         (format "(%s)?%s:%s"
               (parse (first args))
               (parse (second args))
@@ -89,27 +97,25 @@
     (throw (Exception. "Parse error: function parameters must each have a name and a type"))))
 
 (defn parse-do [args]
+  ;;TODO: broken implementation!
   "Parse do expression, ie multiple statements"
-  (println "p-do:" args)
-  (println (join ";" (map parse args)))
+;;  (println (join ";" (map parse args)))
   "42")
 
 (defn parse-defn-expr [exprs ftype]
   "Parse the expression(s) of a function"
-  (println (count exprs))
-  (println (parse (first exprs)))
   (if (= 1 (count exprs))
     (if (= ftype 'void)
-      (format "%s;"
-              (binding [state (assoc state :statement true)]
-                (parse (first exprs))))
-      (format "return %s;"
-              (binding [state (assoc state :statement false)]
-                (parse (first exprs)))))
-    (format "%s; %s" 
-            (binding [state (assoc state :statement true)]
-              (parse (first exprs)))
-            (parse-defn-expr (rest exprs) ftype))))
+      (add-code (format "%s;"
+                        (binding [state (assoc state :statement true)]
+                          (parse (first exprs)))))
+      (add-code (format "return %s;"
+                        (binding [state (assoc state :statement false)]
+                          (parse (first exprs))))))
+    (do (add-code (format "%s;"
+                          (binding [state (assoc state :statement true)]
+                            (parse (first exprs)))))
+        (parse-defn-expr (rest exprs) ftype))))
 
 
 (defn parse-defn [args]
@@ -128,22 +134,64 @@
         (cond 
          (not (symbol? name)) (throw 
                                (Exception.
-                                "Parse error: defn: function name must be a symbol")))
-     ;;   (not (symbol? ftype)) (throw (Exception. 
-       ;;                              (format 
-         ;;                             "Parse error: defn: type must be a symbol (is %s)"
-           ;;                           (type ftype))))
-        ;; (not (vector? params)) (throw (Exception. 
-        ;;                                (format
-        ;;                                 "Parse error: defn: function parameters must be a vector, is %s"
-        ;;                                 (type params))))
-        :else (format "%s %s (%s) {%s}"
+                                "Parse error: defn: function name must be a symbol"))
+        (not (symbol? ftype)) (throw (Exception. 
+                                    (format 
+                                     "Parse error: defn: type must be a symbol (is %s)"
+                                     (type ftype))))
+        (not (vector? params)) (throw (Exception. 
+                                       (format
+                                        "Parse error: defn: function parameters must be a vector, is %s"
+                                        (type params))))
+        :else (do (add-code (format "%s %s (%s) {\n"
+                                    ftype
+                                    name
+                                    (parse-parameters params)))
+                  (add-code (format "%s\n}"
+                                    (parse-defn-expr exprs ftype)))))))))
+
+(defn parse-let-binding [args]
+  (assert (vector? args) "Parse error in let: bindings must be a vector")
+  (assert (<= 2 (count args) 3) "Parse error in let: bindings must be 2 or 3 arguments")
+  (let [name (first args)
+        value (last args)
+        ftype (if (= 3 (count args))
+                (second args)
+                'var)]
+    (add-code (format "%s %s = %s;"
                       ftype
                       name
-                      (parse-parameters params)
-                      (parse-defn-expr exprs ftype))))))
-                      
+                      (binding [state (assoc state :statement false)]
+                        (parse value))))))
 
+(defn parse-let-bindings [args]
+  (assert (vector? args))
+  (doall (map parse-let-binding args)))
+
+(defn parse-let-expr [args]
+  (println state)
+  (if (= (count args) 1)
+    (if (statement?)
+      (add-code (format "%s;"
+                        (parse (first args))))
+      (do (add-code (format "var __tmp_var = %s;"
+                             (parse (first args))))
+          "__tmp_var"))
+    (do
+      (binding [state (assoc state :statement true)]
+        (add-code
+         (format "%s;"
+                 (parse (first args)))))
+      (parse-let-expr (rest args)))))
+                      
+(defn parse-let [args]
+  "Parse let expressions. (let [[name type value]
+                                [name value]
+                               (expr)"
+  (do
+    (parse-let-bindings (first args))
+    (parse-let-expr (rest args))))
+  
 
 (defn parse-special-call [name args]
   "Special hardwired cases"
@@ -157,6 +205,7 @@
     "=" (parse-comparator name args)
     "not=" (parse-comparator name args)
     "defn" (parse-defn args)
+    "let" (parse-let args)
     (throw (Exception. (str 
                         "Parse error: unrecognized keyword: "
                         name)))))
@@ -165,7 +214,7 @@
 (defn parse-function-call [name args]
   "Transform lisp call into vala"
   (format "%s (%s)" 
-          name 
+          name
           (binding [state (assoc state :statement false)]
             (join ", " 
                   (map parse args)))))
@@ -195,3 +244,10 @@
    :else (throw (Exception. (str 
                              "Parse error: don't know how to match " 
                              expr)))))
+
+(defn run-parse [expr]
+  "Init code string to empty string and parse an expression.
+   That's the only function you should call directly"
+  (def code "")
+  (add-code (parse expr))
+  code)
