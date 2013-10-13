@@ -1,4 +1,4 @@
-(defn main int []
+(defn main int [args <string>]
   (stdout.printf "Please enter your name\n")
   (let [[name (stdin.read_line)]]
     (stdout.printf "Hello, %s\n" name)

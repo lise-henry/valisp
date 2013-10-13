@@ -1,0 +1,7 @@
+(defn main int [args <string>]
+  (stdout.printf "Hello, %s\n"
+                 (let [[greet (if (> args.length 1)
+                                (1 args)
+                                "world")]]
+                   greet))
+  0)
