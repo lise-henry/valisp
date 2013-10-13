@@ -17,7 +17,15 @@
 
 (def ^:dynamic code "")
 
+(def ^:dynamic int-var 0)
+
 (declare parse) 
+
+(defn tmpvar-name []
+  "Returns a unique name for a temporary variable"
+  ;; TODO: avoid redefining int-var with def
+  (def int-var (inc int-var))
+  (str "__tmpvar" (str int-var)))
 
 (defn parse-basic-type [t]
   "Return a string corresponding to the C type. Ie, instead
@@ -197,9 +205,11 @@
           ""
           (add-code (format "%s;\n"
                             s))))
-      (do (add-code (format "var __tmp_var = %s;\n"
-                            (parse (first args))))
-          "__tmp_var"))
+      (let [tmpvar (tmpvar-name)]
+        (add-code (format "var %s = %s;\n"
+                          tmpvar
+                          (parse (first args))))
+        tmpvar))
     (do
       (binding [state (assoc state :statement true)]
         (add-code

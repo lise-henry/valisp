@@ -56,3 +56,5 @@ which features are currently implemented. To be honest, they are
 nearly all used in this tiny example, so don't get too much
 expectations, right?
 
+There are also some [examples](doc/examples) of Valisp code available,
+if you want to browse them.
