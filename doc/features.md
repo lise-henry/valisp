@@ -24,7 +24,23 @@ meaning:
 
 * you can't declare function names with `?`, `!`, or `-` characters as
   you would in the lisp way;
-* you must call functions_with_underscores with underscores and not as function-with-underscores.
+* you must call functions_with_underscores with underscores and not as
+  function-with-underscores.
+  
+## Accessing arrays ##
+
+You can access the element `i` of an array 
+
+```
+(i array)
+```
+
+For example to print the name of the program:
+
+```
+(stdout.printf (0 args))
+```
+
 
 ## if ##
 

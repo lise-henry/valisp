@@ -252,6 +252,12 @@
    (symbol? name) (if (reserved-keywords (str name))
                     (parse-special-call name args)
                     (parse-function-call name args))
+   (number? name) (do
+                    (assert (= 1 (count args))
+                            "Parse error in parse-call: when using a number to access array, only one arg is permitted")
+                    (format "%s[%s]"
+                            (first args)
+                            name))
    :else (throw (Exception. "Parse error: first argument in list must be a symbol or a number"))))
 
 
