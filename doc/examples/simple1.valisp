@@ -1,0 +1,4 @@
+(defn main int []
+  (stdout.printf "Enter name\n")
+  (stdout.printf "Hello, %s\n", (stdin.read_line))
+  0)

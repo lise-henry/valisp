@@ -1,0 +1,58 @@
+;; these are not real examples,
+;; this is some ideas of how it should 
+;; look like when it has a bit more features
+
+(defclass Demo.HelloWorld [Glib.Object]
+  (class-method main:int [args:<string>]
+                (.printf stdout "Hello!\n")
+                0))
+
+(defstruct Vector
+  x:double
+  y:double
+  z:double)
+
+(defenum WindowType
+  [TOPLEVEL]
+  [POPUP])
+
+(def a:<int> (array int 10))
+(def b:<int> [2 4 6 8])
+(3 b)
+
+(defclass Track [GLib.Object] 
+  [mass:double]
+  [name:double]
+  [_terminated:bool false]
+  (terminate:void []
+   (set! _terminated true)))
+
+(defn main:void []
+  (.printf stdout "Enter your name: ")
+  (.printf stdout "Hello, %s!\n" (stdin.read_line)))
+
+
+(defclass NumberGuessing []
+         [_min:int]
+         [_max:int]
+         (constructor NumberGuessing [min:int max:int]
+                         (set! [this.min min]
+                               [this.max max]))
+
+         (method start:void []
+                     (let [try-count:int 0
+                           number:int (.int-range Random min max)]
+
+                       (.printf stdout "Bla")
+                       (while true
+                         (set! count (+ 1 count))
+                         (let [input:int (.parse int (.read-line stdin))]
+                           (if (= input number)
+                             (.printf stdout "You win")
+                             (do (.printf stdout "Wrong")
+                                 (recur)))))))
+         (classmethod main:int [args:<string>]
+                      (let [game (new NumberGuessing 1 100)]
+                        (.start game)
+                        0)))}
+

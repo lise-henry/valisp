@@ -97,19 +97,16 @@
                     (partition 2 args)))
     (throw (Exception. "Parse error: function parameters must each have a name and a type"))))
 
-(defn parse-do [args]
-  ;;TODO: broken implementation!
-  "Parse do expression, ie multiple statements"
-;;  (println (join ";" (map parse args)))
-  "42")
-
 (defn parse-defn-expr [exprs ftype]
   "Parse the expression(s) of a function"
   (if (= 1 (count exprs))
     (if (= ftype 'void)
-      (add-code (format "%s;\n"
-                        (binding [state (assoc state :statement true)]
-                          (parse (first exprs)))))
+      (let [s (binding [state (assoc state :statement true)] 
+                (parse (first exprs)))]
+        (if (empty? s)
+          ""
+          (add-code (format "%s;\n"
+                            s))))
       (add-code (format "return %s;\n"
                         (binding [state (assoc state :statement false)]
                           (parse (first exprs))))))
@@ -172,10 +169,13 @@
 (defn parse-let-expr [args]
   (if (= (count args) 1)
     (if (statement?)
-      (add-code (format "%s;\n"
-                        (parse (first args))))
+      (let [s (parse (first args))]
+        (if (empty? s)
+          ""
+          (add-code (format "%s;\n"
+                            s))))
       (do (add-code (format "var __tmp_var = %s;\n"
-                             (parse (first args))))
+                            (parse (first args))))
           "__tmp_var"))
     (do
       (binding [state (assoc state :statement true)]
@@ -183,6 +183,10 @@
          (format "%s;\n"
                  (parse (first args)))))
       (parse-let-expr (rest args)))))
+
+(defn parse-do [args]
+  "Parse do expression, ie multiple statements"
+  (parse-let-expr args))
                       
 (defn parse-let [args]
   "Parse let expressions. (let [[name type value]
@@ -240,7 +244,9 @@
    (list? expr) (parse-list expr)
    (string? expr) (format "\"%s\"" expr)
    (number? expr) (str expr)
-   (symbol? expr) (str expr)
+   (symbol? expr) (if (statement?) 
+                    ""
+                    (str expr))
    :else (throw (Exception. (str 
                              "Parse error: don't know how to match " 
                              expr)))))
