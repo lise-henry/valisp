@@ -15,9 +15,11 @@
   [& args]
   (if (zero? (count args))
     (println "Need valisp file as parameter")
-    (-> args
-        first
-        read-from-file
-        parser/run-parse
-        println)))
+    (do
+      (-> args
+          first
+          read-from-file
+          parser/run-parse
+          println)
+      (shutdown-agents))))
   

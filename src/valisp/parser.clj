@@ -18,7 +18,7 @@
 
 (def ^:dynamic state {})
 
-(def ^:dynamic code "")
+(def ^:dynamic code (agent ""))
 
 (def ^:dynamic int-var 0)
 
@@ -60,8 +60,8 @@
 
 (defn add-code [s]  "Add a string to code string. Returns empty string as
    usually when adding to code you don't need to return value"
-  ;;TODO: change this!!!!!
-  (def code (str code " " s))
+  (send code str " " s)
+;;  (def code (str code " " s))
   "")
 
 (defn statement? []
@@ -324,6 +324,6 @@
 (defn run-parse [expr]
   "Init code string to empty string and parse an expression.
    That's the only function you should call directly"
-  (def code "")
+  (send code (constantly ""))
   (add-code (parse expr))
-  code)
+  @code)
