@@ -235,9 +235,6 @@
   "Allows to assign value to variables"
   (assert (= (count args) 2)
           "Parse error: set! must take exactly two arguments")
-  (println args)
-  (println (first args))
-  (println (type (first  args)))
   (let [name (parse (first args))
         value (binding [state (assoc state :statement false)]
                 (parse (second args)))]

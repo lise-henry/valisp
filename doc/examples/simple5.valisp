@@ -1,0 +1,4 @@
+(defn main int [args <string>]
+  (set! (0 args) "miaou") ;; ok, it causes a big crash at runtime, but it compiles :)
+  (stdout.printf "%s\n" (0 args))
+  0)

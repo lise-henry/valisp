@@ -41,6 +41,25 @@ For example to print the name of the program:
 (stdout.printf (0 args))
 ```
 
+## set! ##
+
+To assign a value to a variable (mutating it), you can use `set!`:
+
+```
+(set! x 42)
+```
+
+This also works for arrays:
+
+```
+(set! (3 x) 42)
+```
+
+translates to
+
+```
+x[3] = 42
+```
 
 ## if ##
 
