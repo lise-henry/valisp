@@ -1,0 +1,4 @@
+(defn main int [args <string>]
+  (for [x args]
+    (stdout.printf "%s\n" x))
+  0)

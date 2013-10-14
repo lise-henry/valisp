@@ -34,7 +34,8 @@
     "new"
     "ref"
     "fn"
-    "array"})
+    "array"
+    "for"})
 
 (def ^:dynamic state {})
 
@@ -345,6 +346,23 @@
           (parse-type (first args))
           (second args)))
 
+(defn parse-for [args]
+  "Parse a for, in form (for [var array] exprs"
+  (assert (statement?) "Error in for: can't be used as return value")
+  (let [[[var array] & exprs] args] 
+    (add-code 
+     (binding [state (assoc state :statement false)]
+       (format "foreach (var %s in %s) {\n"
+               (parse var)
+               (parse array))))
+    (loop [exprs exprs]
+      (if (empty? exprs)
+        (add-code "}\n")
+        (do
+          (add-code (format "%s;\n"
+                              (parse (first exprs))))
+          (recur (rest exprs)))))))
+
 (defn parse-special-call [name args]
   "Special hardwired cases"
   (condp = (str name)
@@ -367,6 +385,7 @@
     "ref" (parse-ref args)
     "fn" (parse-fn args)
     "array" (parse-array args)
+    "for" (parse-for args)
     (throw (Exception. (str 
                         "Parse error: unrecognized keyword: "
                         name)))))

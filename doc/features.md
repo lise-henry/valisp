@@ -234,11 +234,35 @@ returning the value of the last one:
     exprn)
 ```
 
+## for ##
+
+Valisp provides a basic for loop, which actually corresponds to
+`foreach` in Vala:
+
+```
+(for [var array]
+     expr1
+     ...
+     exprn)
+```
+
+It is not possible to use a return value of `for` construct.
+
+
+Bugs
+----
+Does not correctly chain-call function, ie. 
+```
+((f 42))
+```
+
+does not work, even if `f` is a function returning a function.
+
+
 Not yet inplemented
 -------------------
 
-* loops
-* lists
-* vectors
 * classes and methods definition
-* a valisp compiler in valisp
+* lists?
+* vectors?
+* a valisp compiler in valisp?
