@@ -13,7 +13,8 @@
     "defn"
     "let"
     "set!"
-    "new"})
+    "new"
+    "ref"})
 
 (def ^:dynamic state {})
 
@@ -236,15 +237,15 @@
   "Allows to assign value to variables"
   (assert (= (count args) 2)
           "Parse error: set! must take exactly two arguments")
-  (let [name (parse (first args))
-        value (binding [state (assoc state :statement false)]
-                (parse (second args)))]
-    (format "%s = %s%s\n"
-                       name
-                       value
-                       (if (statement?)
-                         ";"
-                         ""))))
+  (binding [state (assoc state :statement false)]
+    (let [name (doall (parse (first args)))
+          value (doall (parse (second args)))]
+      (format "%s = %s%s\n"
+              name
+              value
+              (if (statement?)
+                ";"
+                "")))))
 
 (defn parse-function-call [name args]
   "Transform lisp call into vala"
@@ -259,6 +260,12 @@
   "Parse call to constructor new"
   (assert (not (empty? args)) "Parse error in new: new must take at least one argument")
   (parse-function-call (str "new " (first args)) (rest args)))
+
+(defn parse-ref [args]
+  "Parse ref call, a technical vala stuff but sometimes needed"
+  (assert (= 1 (count args)) "Parse error: ref must take exactly one argument")
+  (format "ref %s"
+          (parse (first args))))
 
 (defn parse-special-call [name args]
   "Special hardwired cases"
@@ -275,6 +282,7 @@
     "let" (parse-let args)
     "set!" (parse-set! args)
     "new" (parse-new args)
+    "ref" (parse-ref args)
     (throw (Exception. (str 
                         "Parse error: unrecognized keyword: "
                         name)))))

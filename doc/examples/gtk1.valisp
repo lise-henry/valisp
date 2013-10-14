@@ -1,5 +1,5 @@
-(defn main int []
-  (Gtk.init null)
+(defn main int [args <string>]
+  (Gtk.init (ref args))
   (let [[win (new Gtk.Window)]
         [button (new Gtk.Button.with_label "Hello!")]]
         (win.destroy.connect Gtk.main_quit)
