@@ -14,11 +14,12 @@
     "let"
     "set!"
     "new"
-    "ref"})
+    "ref"
+    "fn"})
 
 (def ^:dynamic state {})
 
-(def ^:dynamic code (agent ""))
+(def ^:dynamic code (atom ""))
 
 (def ^:dynamic int-var 0)
 
@@ -60,7 +61,7 @@
 
 (defn add-code [s]  "Add a string to code string. Returns empty string as
    usually when adding to code you don't need to return value"
-  (send code str " " s)
+  (swap! code str " " s)
 ;;  (def code (str code " " s))
   "")
 
@@ -153,7 +154,25 @@
                             (parse (first exprs)))))
         (parse-defn-expr (rest exprs) ftype))))
 
-
+(defn parse-fn [args]
+  "Declare a closure"
+  (if (< (count args) 3)
+    (throw (Exception. 
+            (format 
+             "Parse error in parse-fn: closure declaration must take at least three arguments, %s given"
+             (count args))))
+    (condp = (count args)
+      (let [[ftype params & exprs] args]
+        (cond 
+        (not (vector? params)) (throw (Exception. 
+                                       (format
+                                        "Parse error in parse-fn: function parameters must be a vector, is %s"
+                                        (type params))))
+        :else  (format "(%s) => {%s}\n"
+                       (join ", " params)
+                       (binding [code (atom "")]
+                         (parse-defn-expr exprs ftype)
+                         @code)))))))
 (defn parse-defn [args]
   "Declare a function (not a closure)"
   (if (< (count args) 2)
@@ -283,6 +302,7 @@
     "set!" (parse-set! args)
     "new" (parse-new args)
     "ref" (parse-ref args)
+    "fn" (parse-fn args)
     (throw (Exception. (str 
                         "Parse error: unrecognized keyword: "
                         name)))))
@@ -324,6 +344,6 @@
 (defn run-parse [expr]
   "Init code string to empty string and parse an expression.
    That's the only function you should call directly"
-  (send code (constantly ""))
+  (swap! code (constantly ""))
   (add-code (parse expr))
   @code)

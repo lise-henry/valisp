@@ -20,6 +20,5 @@
           first
           read-from-file
           parser/run-parse
-          println)
-      (shutdown-agents))))
+          println))))
   

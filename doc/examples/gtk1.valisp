@@ -3,8 +3,11 @@
   (let [[win (new Gtk.Window)]
         [button (new Gtk.Button.with_label "Hello!")]]
         (win.destroy.connect Gtk.main_quit)
-        (win.add button)
         (set! win.title "Hi!")
+        (button.clicked.connect 
+         (fn void []
+           (set! button.label "Goodbye!")))
+        (win.add button)
         (win.show_all)
         (Gtk.main)
         0))
