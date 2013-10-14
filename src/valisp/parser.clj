@@ -12,7 +12,8 @@
     "not="
     "defn"
     "let"
-    "set!"})
+    "set!"
+    "new"})
 
 (def ^:dynamic state {})
 
@@ -245,6 +246,20 @@
                          ";"
                          ""))))
 
+(defn parse-function-call [name args]
+  "Transform lisp call into vala"
+  (format "%s (%s)" 
+          name
+          (binding [state (assoc state :statement false)]
+            (join ", " 
+                  (map parse args)))))
+
+
+(defn parse-new [args]
+  "Parse call to constructor new"
+  (assert (not (empty? args)) "Parse error in new: new must take at least one argument")
+  (parse-function-call (str "new " (first args)) (rest args)))
+
 (defn parse-special-call [name args]
   "Special hardwired cases"
   (condp = (str name)
@@ -259,18 +274,10 @@
     "defn" (parse-defn args)
     "let" (parse-let args)
     "set!" (parse-set! args)
+    "new" (parse-new args)
     (throw (Exception. (str 
                         "Parse error: unrecognized keyword: "
                         name)))))
-
-
-(defn parse-function-call [name args]
-  "Transform lisp call into vala"
-  (format "%s (%s)" 
-          name
-          (binding [state (assoc state :statement false)]
-            (join ", " 
-                  (map parse args)))))
 
 (defn parse-call [name args]
   "Parce a call. Usually function call, if not reserved keyword"
