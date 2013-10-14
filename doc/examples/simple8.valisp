@@ -1,2 +1,10 @@
-(defn test [int int] [f [int [int int]] a int]
-  (f a))
+(defn test void [f [int int] a int]
+  (stdout.printf "%d\n"
+                 (f a)))
+
+(defn main int [args <string>]
+  (test (fn int [x]
+          (* 2 x))
+        21)
+  0)
+                 
