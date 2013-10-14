@@ -49,6 +49,12 @@ Arrays can be defined with `[]`:
 [1 2 3]
 ```
 
+Empty arrays can also be constructed with the `array` form:
+
+```
+(array int 10)
+```
+
 ## set! ##
 
 To assign a value to a variable (mutating it), you can use `set!`:

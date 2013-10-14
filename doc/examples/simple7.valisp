@@ -1,3 +1,7 @@
-(defn main 
-  (let [[x <string> ["Plop" "Meow" "Quack"]]]
-    (stdout.printf "%s\n" (1 x))))
+(defn main int [args <string>]
+  (let [[x <string> ["Plop" "Meow" "Quack"]]
+        [y <int> (array int 10)]]
+    (set! (2 y) 42)
+    (stdout.printf "%d\n" (2 y))
+    (stdout.printf "%s\n" (1 x))
+    0))

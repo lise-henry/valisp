@@ -33,7 +33,8 @@
     "set!"
     "new"
     "ref"
-    "fn"})
+    "fn"
+    "array"})
 
 (def ^:dynamic state {})
 
@@ -295,6 +296,16 @@
   (format "ref %s"
           (parse (first args))))
 
+(defn parse-array [args]
+  "Parse the array form"
+  (assert (= 2 (count args))
+          "Parse error: array must take exactly two arguments")
+  (assert (number? (second args))
+          "Parse error in array: second argument must be a number")
+  (format "new %s[%s]"
+          (parse-type (first args))
+          (second args)))
+
 (defn parse-special-call [name args]
   "Special hardwired cases"
   (condp = (str name)
@@ -316,6 +327,7 @@
     "new" (parse-new args)
     "ref" (parse-ref args)
     "fn" (parse-fn args)
+    "array" (parse-array args)
     (throw (Exception. (str 
                         "Parse error: unrecognized keyword: "
                         name)))))
@@ -353,7 +365,7 @@
    (vector? expr) (if (statement?)
                     ""
                     (format "{%s}" 
-                            (join ", " expr)))
+                            (join ", " (map parse expr))))
    :else (throw (Exception. (str 
                              "Parse error: don't know how to match " 
                              expr)))))
