@@ -1,15 +1,33 @@
 (ns valisp.parser
   (:use [clojure.string :only [join]]))
 
+(def ^:const operators
+  #{"+"
+    "-"
+    "/"
+    "*"})
+
+(def ^:const comparators
+  #{"<"
+    ">"
+    "<="
+    ">="
+    "="
+    "not="})
+
 (def ^:const reserved-keywords
-  #{"if"
-    "do"
+  #{"+"
+    "-"
+    "/"
+    "*"
     "<"
     ">"
     "<="
     ">="
     "="
     "not="
+    "if"
+    "do"
     "defn"
     "let"
     "set!"
@@ -95,34 +113,25 @@
              "Parse error: wrong number of arguments to if (%s)"
              (count args))))))
 
-(defn parse-comparator [name args]
-  "Parse comparators"
+(defn parse-operator [name args]
+  "Parse binary (well, not in valisp) operators"
   (if (> 2 (count args))
     (throw (Exception. 
             (format
              "%s must take at least two arguments (%s given)"
              name
              (count args))))
-    (let [comparator (condp = (str name)
-                       "<" "<"
-                       ">" ">"
-                       "<=" "<="
-                       ">=" ">="
-                       "not= " "!="
-                       "=" "=="
-                       (throw (Exception. 
-                               (format
-                                "%s is not a valid comparator"
-                                name))))]
+    (let [op (condp = (str name)
+               "not= " "!="
+               "=" "=="
+               (str name))]
       (binding [state (assoc state :statement false)]
-        (format "%s %s %s %s"
+        (format "%s %s %s"
                 (parse (first args))
-                comparator
-                (parse (second args))
+                op
                 (if (= 2 (count args))
-                  ""
-                  (str "&& "
-                       (parse-comparator name (rest args)))))))))
+                  (parse (second args))
+                  (parse-operator name (rest args))))))))
 
 
 (defn parse-parameters [args]
@@ -291,12 +300,16 @@
   (condp = (str name)
     "if" (parse-if args)
     "do" (parse-do args)
-    "<" (parse-comparator name args)
-    "<=" (parse-comparator name args)
-    ">" (parse-comparator name args)
-    ">=" (parse-comparator name args)
-    "=" (parse-comparator name args)
-    "not=" (parse-comparator name args)
+    "<" (parse-operator name args)
+    "<=" (parse-operator name args)
+    ">" (parse-operator name args)
+    ">=" (parse-operator name args)
+    "=" (parse-operator name args)
+    "not=" (parse-operator name args)
+    "+" (parse-operator name args)
+    "-" (parse-operator name args)
+    "/" (parse-operator name args)
+    "*" (parse-operator name args)
     "defn" (parse-defn args)
     "let" (parse-let args)
     "set!" (parse-set! args)

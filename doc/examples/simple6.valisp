@@ -1,0 +1,5 @@
+(defn test int [x int]
+  (if (< 0 x 10)
+    (* x x)
+    (+ x 4 3)))
+  

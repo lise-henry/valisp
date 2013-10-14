@@ -124,6 +124,22 @@ Both implicit void input and return type:
 Note, though, that multiple expressions in the body are only possible
 with full declaration.
 
+## fn ##
+
+Generates a closure or anonymous function. The syntax is similar to
+`defn`, except:
+
+* there is no name, because it is anonymous ;
+* there is no need for the type of the parameters, since it can be
+  inferred (the return type is still needed, though).
+  
+So it looks like:
+
+```
+(fn int [x]
+    (* x 2))
+```
+
 ## types ##
 
 Since it's very directly compiled to vala and uses no run-time, Valisp
@@ -148,6 +164,15 @@ They can take more than 2 arguments:
 
 ```
 (< 0 x 10)
+```
+
+## arithmetic operators ##
+
+Standard arithmetic operators, `+`, `-`, `*`, `/` work in the same
+way: 
+
+```
+(+ 3 4 5)
 ```
 
 ## let ##
