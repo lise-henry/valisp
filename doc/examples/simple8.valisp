@@ -1,0 +1,2 @@
+(defn test [int int] [f [int [int int]] a int]
+  (f a))

@@ -38,17 +38,60 @@
 
 (def ^:dynamic state {})
 
+(def ^:dynamic pre-code (atom ""))
+
 (def ^:dynamic code (atom ""))
 
-(def ^:dynamic int-var 0)
+(def ^:dynamic int-var (atom  0))
 
-(declare parse) 
+(def ^:dynamic delegates (atom {}))
+
+(defn add-code [s]  "Add a string to code string. Returns empty string as
+   usually when adding to code you don't need to return value"
+  (swap! code str " " s)
+  "")
+
+(defn add-pre-code [s]  "Add a string to code string. Returns empty string as
+   usually when adding to code you don't need to return value"
+  (swap! pre-code str " " s)
+  "")
+
 
 (defn tmpvar-name []
   "Returns a unique name for a temporary variable"
   ;; TODO: avoid redefining int-var with def
-  (def int-var (inc int-var))
-  (str "__tmpvar" (str int-var)))
+  (swap! int-var inc)
+  (str "__tmpvar" (str @int-var)))
+
+
+(declare parse) 
+(declare parse-type)
+
+
+(defn delegate-name [t]
+  "Returns the vala delegate name (and creates it if it needs to)"
+  (let [ret (parse-type (last t))
+            args (join ", "
+                       (map #(format "%s %s"
+                                 (parse-type %)
+                                 (tmpvar-name)) 
+                            (butlast t)))
+        name (@delegates t)]
+    (if (nil? name)
+      (let [ name (tmpvar-name)]
+        (swap! delegates assoc t name)
+        (add-pre-code
+         (format "delegate %s %s (%s);\n"
+                 ret
+                 name
+                 args))
+        name)
+      name)))
+
+(defn parse-fn-type [t]
+  "Parse function type, of form 
+   [type_arg1 type_arg2 return_type]"
+  (delegate-name t))
 
 (defn parse-basic-type [t]
   "Return a string corresponding to the C type. Ie, instead
@@ -65,24 +108,20 @@
      (join (for [_ (range (count c-<))]
              "[]")))))
 
+
 (defn parse-type [t]
-  "Returns the full C type of a valisp type"
+  "Returns the full Vala type of a valisp type"
   (cond
    (symbol? t) (parse-basic-type t)
    (string? t) (parse-basic-type t)
-   (vector? t) (throw (Exception. 
-                       "Error in parse type: function types not yet supported"))
+   (vector? t) (parse-fn-type t)
    :else (throw (Exception.
                  (format 
                   "Parse error in parse type: a valid type must be a symbol or a vector, not %s (%s)"
                   (type t)
                   t)))))
 
-(defn add-code [s]  "Add a string to code string. Returns empty string as
-   usually when adding to code you don't need to return value"
-  (swap! code str " " s)
-;;  (def code (str code " " s))
-  "")
+
 
 (defn statement? []
   "Return true if we are in a statement, ie 'xxx;',
@@ -140,8 +179,8 @@
   (if (even? (count args))
     (join ", " (map (fn [args]
                       (let [[name type] args]
-                        (assert (and (symbol? name) (symbol? type))
-                                "Parse error in function parameters: type or name is not a symbol")
+                        (assert (symbol? name) 
+                                "Parse error in function parameters: name is not a symbol")
                         (format "%s %s" (parse-type type) name)))
                     (partition 2 args)))
     (throw (Exception. "Parse error: function parameters must each have a name and a type"))))
@@ -373,6 +412,7 @@
 (defn run-parse [expr]
   "Init code string to empty string and parse an expression.
    That's the only function you should call directly"
-  (swap! code (constantly ""))
-  (add-code (parse expr))
-  @code)
+  (binding [code (atom "")
+            pre-code (atom "")]
+    (add-code (parse expr))
+    (str @pre-code @code)))
