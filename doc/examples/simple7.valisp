@@ -1,0 +1,3 @@
+(defn main 
+  (let [[x <string> ["Plop" "Meow" "Quack"]]]
+    (stdout.printf "%s\n" (1 x))))

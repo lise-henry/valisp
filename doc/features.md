@@ -41,6 +41,14 @@ For example to print the name of the program:
 (stdout.printf (0 args))
 ```
 
+## Defining arrays ##
+
+Arrays can be defined with `[]`:
+
+```
+[1 2 3]
+```
+
 ## set! ##
 
 To assign a value to a variable (mutating it), you can use `set!`:

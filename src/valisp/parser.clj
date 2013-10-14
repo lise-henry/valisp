@@ -350,6 +350,10 @@
    (symbol? expr) (if (statement?) 
                     ""
                     (str expr))
+   (vector? expr) (if (statement?)
+                    ""
+                    (format "{%s}" 
+                            (join ", " expr)))
    :else (throw (Exception. (str 
                              "Parse error: don't know how to match " 
                              expr)))))
