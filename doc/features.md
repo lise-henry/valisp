@@ -162,7 +162,9 @@ needs to be statically typed, which is a bit unusual for lispy syntax.
 Types are the same as their Vala counterpart, except:
 
 * an array of type T is `<T>` (and not `T[]`)
-* types for function pointers are not yet implemented.
+* types for function pointers are of the form
+  `[type-arg1 ... type-argn return-type]`, e.g. a function taking an
+  `int` and returning `void` will have type `[int void]`
 
 ## comparators ##
 
@@ -235,7 +237,6 @@ returning the value of the last one:
 Not yet inplemented
 -------------------
 
-* types for function pointers
 * loops
 * lists
 * vectors
