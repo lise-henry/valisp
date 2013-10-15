@@ -263,6 +263,7 @@ Not yet inplemented
 -------------------
 
 * classes and methods definition
+* templates
 * lists?
 * vectors?
 * a valisp compiler in valisp?
