@@ -1,4 +1,4 @@
-(defproject valisp "0.1"
+(defproject valisp "0.2-SNAPSHOT"
   :description "A lispy flavour of Vala"
   :url "https://github.com/lady-segfault/valisp"
   :license {:name "GNU General Public License 2.0"
